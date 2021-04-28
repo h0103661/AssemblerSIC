@@ -64,24 +64,99 @@ public class MainAssembler {
 	 * 開始組譯
 	 */
 	
-	private String folder = "";
 	private String fileName = "test.SIC";
+	
+	private String codeName;	//程式名稱
+	private String startLoc;	//程式開頭位址
+	private String startTitle;	//程式開頭標籤
 	
 	//pairs分成三個是為了檢查各階段的變化, debug用
 	private void start() {
-		List<String> inputs = readFileFromString(folder + File.separator + fileName);
+		List<String> inputs = readFileFromString(fileName);
+		setCodeName(inputs);
+		setStartLoc(inputs);
+		setStartTitle(inputs);
+		/*
 		List<Code> pairsA = pair(inputs);
+		
+		for(Code c : pairsA) {
+			System.out.println(c.getOutput());
+		}
+		*/
+		/*
 		List<Code> pairsB = calculateLoc(pairsA);
 		List<Code> pairsC = calculateObject(pairsB);
 		List<String> records = createRecord(pairsC);
 		writeFileCodesFromString(folder + File.separator + fileName, pairsC);
 		writeFileRecordsFromString(folder + File.separator + fileName, records);
+		*/
 	}
 
 	/*
-	 * function
+	 * getter & setter
 	 */
 	
+	public String getCodeName() {
+		return codeName;
+	}
+
+	public void setCodeName(List<String> inputs) {
+		String last = "";
+		for(String s : inputs) {
+			if(s.equalsIgnoreCase("START")) {
+				if(last.isEmpty()) {
+					System.out.println("[ERROR] START前面沒有程式名稱!");
+					return;
+				} else {
+					this.codeName = last;
+					return;
+				}
+			}
+			last = s;
+		}
+		System.out.println("[ERROR] 尋找程式名稱時找不到START!");
+	}
+
+	public String getStartLoc() {
+		return startLoc;
+	}
+
+	public void setStartLoc(List<String> inputs) {
+		boolean next = false;
+		for(String s : inputs) {
+			if(next) {
+				this.startLoc = s;
+				return;
+			}
+			if(s.equalsIgnoreCase("START")) {
+				next = true;
+			}
+		}
+		System.out.println("[ERROR] 尋找程式開頭位址時找不到START或START之後沒有字串!");
+	}
+
+	public String getStartTitle() {
+		return startTitle;
+	}
+
+	public void setStartTitle(List<String> inputs) {
+		boolean next = false;
+		for(String s : inputs) {
+			if(next) {
+				this.startTitle = s;
+				return;
+			}
+			if(s.equalsIgnoreCase("END")) {
+				next = true;
+			}
+		}
+		System.out.println("[ERROR] 尋找程式開頭位址時找不到END或END之後沒有字串!");
+	}
+	
+	/*
+	 * function
+	 */
+
 	/**
 	 * 從loc讀取檔案, 並產生字元list
 	 * @param loc 位置
@@ -93,8 +168,6 @@ public class MainAssembler {
 		 * 讀取檔案
 		 */
 		File file = new File(loc);
-		//FileInputStream是以byte為單位
-		//FileReader是以字元為單位
 		FileReader reader = null;
 		try {
 			reader = new FileReader(file);
@@ -136,7 +209,9 @@ public class MainAssembler {
 	 * @return Code的list
 	 */
 	private List<Code> pair(List<String> inputs) {
-		return null;
+		List<Code> listCode = new ArrayList<Code>();
+		
+		return listCode;
 	}
 	
 	/**
@@ -169,6 +244,10 @@ public class MainAssembler {
 		
 		return records;
 	}
+	
+	/*
+	 * 輸出
+	 */
 	
 	private File writeFileCodesFromString(String loc, List<Code> pairs) {
 		//將code轉成輸出的字串
