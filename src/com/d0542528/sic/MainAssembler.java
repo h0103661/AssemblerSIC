@@ -7,10 +7,12 @@
 package com.d0542528.sic;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -168,11 +170,59 @@ public class MainAssembler {
 		return records;
 	}
 	
-	private void writeFileCodesFromString(String string, List<Code> pairs) {
-		
+	private File writeFileCodesFromString(String loc, List<Code> pairs) {
+		//將code轉成輸出的字串
+		List<String> outputs = new ArrayList<String>();
+		for(Code code : pairs) {
+			outputs.add(code.getOutput());
+		}
+		return writeFileFromString(loc, outputs);
 	}
 	
-	private void writeFileRecordsFromString(String string, List<String> records) {
+	private File writeFileRecordsFromString(String loc, List<String> records) {
+		return writeFileFromString(loc, records);
+	}
+	
+	private File writeFileFromString(String loc, List<String> outputs) {
+		/*
+		 * 讀取檔案
+		 */
+		File file = new File(loc);
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(file);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		BufferedWriter buffer = new BufferedWriter(writer);
 		
+		/*
+		 * 寫入字串
+		 */
+		for(String s : outputs) {
+			try {
+				buffer.write(s);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		/*
+		 * 結束讀取
+		 */
+		try {
+			buffer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return file;
 	}
 }

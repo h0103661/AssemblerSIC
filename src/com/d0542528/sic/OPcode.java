@@ -74,4 +74,13 @@ public class OPcode {
 		mapOP.put("B8", "TIXR");
 		mapOP.put("DC", "WD");
 	}
+	
+	public String findXfromString(String op) {
+		for(String x : mapOP.keySet()) {
+			if(mapOP.get(x).equalsIgnoreCase(op)) {
+				return x;
+			}
+		}
+		return null;
+	}
 }
