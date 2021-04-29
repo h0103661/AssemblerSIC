@@ -9,16 +9,12 @@ package com.d0542528.sic;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class MainAssembler {
@@ -44,7 +40,7 @@ public class MainAssembler {
 	/*
 	 * 程式初始化
 	 */
-	private OPcode op;
+	private OPcode OPcode;
 	
 	private void init() {
 		setOp(new OPcode());
@@ -53,11 +49,11 @@ public class MainAssembler {
 	}
 
 	public OPcode getOp() {
-		return op;
+		return OPcode;
 	}
 
 	public void setOp(OPcode op) {
-		this.op = op;
+		this.OPcode = op;
 	}
 	
 	/*
@@ -69,6 +65,7 @@ public class MainAssembler {
 	private String codeName;	//程式名稱
 	private String startLoc;	//程式開頭位址
 	private String startTitle;	//程式開頭標籤
+	private int lenTitle;	//最長title長度
 	private String endLoc;		//程式結尾位址
 	private String totalLoc;	//程式總長度
 	
@@ -84,17 +81,21 @@ public class MainAssembler {
 		for(Code c : pairsA) {
 			System.out.println(c.getStringPair());
 		}*/
-		
+		//獲得title長度
+		setLenTitle(pairsA);
 		
 		List<Code> pairsB = calculateLoc(pairsA);
 		/*
-		 * for(Code c : pairsB) {
+		for(Code c : pairsB) {
 			System.out.println(c.getStringLoc());
 		}
 		System.out.println(getEndLoc());
 		System.out.println(getTotalLoc());*/
 		
 		List<Code> pairsC = calculateObject(pairsB);
+		for(Code c : pairsC) {
+			System.out.println(c.getOutput());
+		}
 		
 		/*
 		List<String> records = createRecord(pairsC);
@@ -164,6 +165,23 @@ public class MainAssembler {
 		System.out.println("[ERROR] 尋找程式開頭位址時找不到END或END之後沒有字串!");
 	}
 	
+	public int getLenTitle() {
+		return lenTitle;
+	}
+
+	public void setLenTitle(List<Code> inputs) {
+		int i = 0;
+		for(Code c : inputs) {
+			if(c.getTitle() != null && !c.getTitle().isEmpty()) {
+				int l = c.getTitle().length();
+				if(l > i) {
+					i = l;
+				}
+			}
+		}
+		this.lenTitle = i;
+	}
+
 	public String getEndLoc() {
 		return endLoc;
 	}
@@ -258,7 +276,7 @@ public class MainAssembler {
 				isOther = false;
 				continue;
 			}
-			if(op.isOPcode(s)) {
+			if(OPcode.isOPcode(s)) {
 				if(s.equalsIgnoreCase("RSUB")) { //RSUB只有一格, 要在這裡就寫入code
 					Code code = new Code();
 					code.setTitle(last);
@@ -274,7 +292,7 @@ public class MainAssembler {
 					next = true;
 					continue;
 				}
-			} else if(op.isOther(s)) { //如果不是op但是是佔位符, 一樣要在下一步寫入code
+			} else if(OPcode.isOther(s)) { //如果不是op但是是佔位符, 一樣要在下一步寫入code
 				opcode = s;
 				next = true;
 				isOther = true;
@@ -298,8 +316,8 @@ public class MainAssembler {
 		int i = Integer.parseInt(getStartLoc(), 16);
 		for(Code c : pairs) {
 			Code newcode = c.copy();
-			//如果不滿6位，用0填充
-			newcode.setLoc(String.format("%6s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
+			//如果不滿4位，用0填充
+			newcode.setLoc(String.format("%4s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
 			listCode.add(newcode);
 			
 			if(c.getOp().equalsIgnoreCase("BYTE")) {
@@ -319,10 +337,10 @@ public class MainAssembler {
 			}
 		}
 		
-		this.setEndLoc(String.format("%6s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
+		this.setEndLoc(String.format("%4s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
 		int start = Integer.parseInt(getStartLoc(), 16);
 		int total = i - start;
-		this.setTotalLoc(String.format("%6s", Integer.toHexString(total).toUpperCase()).replace(' ', '0'));
+		this.setTotalLoc(String.format("%4s", Integer.toHexString(total).toUpperCase()).replace(' ', '0'));
 		
 		return listCode;
 	}
@@ -335,7 +353,38 @@ public class MainAssembler {
 	private List<Code> calculateObject(List<Code> pairs) {
 		List<Code> listCode = new ArrayList<Code>();
 		
+		for(Code c : pairs) {
+			if(c.isOther()) {
+				// TODO 補上RSUB和others
+			} else {
+				if(c.getValue() != null && !c.getValue().isEmpty()) {
+					String value = c.getValue();
+					if(value.contains(",")) {
+						int index = value.indexOf(",");
+						value = value.substring(0, index);
+					}
+					Code tc = getCodeByTitle(pairs, value);
+					String ta = tc.getLoc();
+					String op = OPcode.findXfromString(c.getOp());
+					String code = op + ta;
+					
+					Code newcode = c.copy();
+					newcode.setCode(code);
+					listCode.add(newcode);
+				}
+			}
+		}
+		
 		return listCode;
+	}
+	
+	private Code getCodeByTitle(List<Code> list, String title) {
+		for(Code c : list) {
+			if(c.getTitle().equalsIgnoreCase(title)) {
+				return c;
+			}
+		}
+		return null;
 	}
 	
 	/**

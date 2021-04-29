@@ -89,32 +89,43 @@ public class Code {
 
 	/**
 	 * pair用
+	 * 為了排版好看, 會從main取得最長title的長度來調整
 	 * @return debug用的code字串
 	 */
 	public String getStringPair() {
 		String output = "";
 		if(getTitle() != null && !getTitle().isEmpty()) {
-			output += getTitle();
+			output += String.format("%-" + MainAssembler.getInstance().getLenTitle() + "s", getTitle());
+		} else {
+			output += String.format("%-" + MainAssembler.getInstance().getLenTitle() + "s", "");
 		}
-		output += "\t";
-		output += getOp();
+		
+		output += "  ";
+		output += String.format("%-5s", getOp());
+		
+		//value最長就是"title,X", 所以+2
+		output += "  ";
 		if(getValue() != null && !getValue().isEmpty()) {
-			output += "\t";
-			output += getValue();
+			output += String.format("%-" + (MainAssembler.getInstance().getLenTitle() + 2) + "s", getValue());
+		} else {
+			output += String.format("%-" + (MainAssembler.getInstance().getLenTitle() + 2) + "s", "");
 		}
 		return output;
 	}
 	
 	/**
 	 * loc用
+	 * 因為設定時就固定4位了, 只要把沒有loc的補上去
 	 * @return debug用的code字串
 	 */
 	public String getStringLoc() {
 		String output = "";
 		if(getLoc() != null && !getLoc().isEmpty()) {
 			output += getLoc();
+		} else {
+			output += String.format("%4s", "");
 		}
-		output += "\t";
+		output += "  ";
 		output += getStringPair();
 		return output;
 	}
@@ -124,6 +135,11 @@ public class Code {
 	 * @return 寫入檔案用的字串
 	 */
 	public String getOutput() {
-		return "";
+		String output = getStringLoc();
+		if(getCode() != null && !getCode().isEmpty()) {
+			output += "  ";
+			output += getCode();
+		}
+		return output;
 	}
 }
