@@ -69,6 +69,8 @@ public class MainAssembler {
 	private String codeName;	//程式名稱
 	private String startLoc;	//程式開頭位址
 	private String startTitle;	//程式開頭標籤
+	private String endLoc;		//程式結尾位址
+	private String totalLoc;	//程式總長度
 	
 	//pairs分成三個是為了檢查各階段的變化, debug用
 	private void start() {
@@ -78,17 +80,26 @@ public class MainAssembler {
 		setStartTitle(inputs);
 		
 		List<Code> pairsA = pair(inputs);
-		
+		/*
 		for(Code c : pairsA) {
-			System.out.println(c.getPairString());
+			System.out.println(c.getStringPair());
+		}*/
+		
+		
+		List<Code> pairsB = calculateLoc(pairsA);
+		/*
+		 * for(Code c : pairsB) {
+			System.out.println(c.getStringLoc());
 		}
+		System.out.println(getEndLoc());
+		System.out.println(getTotalLoc());*/
+		
+		List<Code> pairsC = calculateObject(pairsB);
 		
 		/*
-		List<Code> pairsB = calculateLoc(pairsA);
-		List<Code> pairsC = calculateObject(pairsB);
 		List<String> records = createRecord(pairsC);
-		writeFileCodesFromString(folder + File.separator + fileName, pairsC);
-		writeFileRecordsFromString(folder + File.separator + fileName, records);
+		writeFileCodesFromString(fileName, pairsC);
+		writeFileRecordsFromString(fileName, records);
 		*/
 	}
 
@@ -153,10 +164,27 @@ public class MainAssembler {
 		System.out.println("[ERROR] 尋找程式開頭位址時找不到END或END之後沒有字串!");
 	}
 	
+	public String getEndLoc() {
+		return endLoc;
+	}
+
+	public void setEndLoc(String endLoc) {
+		this.endLoc = endLoc;
+	}
+
+	public String getTotalLoc() {
+		return totalLoc;
+	}
+
+	public void setTotalLoc(String totalLoc) {
+		this.totalLoc = totalLoc;
+	}
+
+	
 	/*
 	 * function
 	 */
-
+	
 	/**
 	 * 從loc讀取檔案, 並產生字元list
 	 * @param loc 位置
@@ -264,8 +292,39 @@ public class MainAssembler {
 	 * @return 計算好位址的pairs
 	 */
 	private List<Code> calculateLoc(List<Code> pairs) {
+		List<Code> listCode = new ArrayList<Code>();
 		
-		return pairs;
+		//初始位址的10進位
+		int i = Integer.parseInt(getStartLoc(), 16);
+		for(Code c : pairs) {
+			Code newcode = c.copy();
+			//如果不滿6位，用0填充
+			newcode.setLoc(String.format("%6s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
+			listCode.add(newcode);
+			
+			if(c.getOp().equalsIgnoreCase("BYTE")) {
+				if(c.getValue().contains("X")) {
+					i += 1;
+				} else {
+					int index = c.getValue().indexOf("\'");
+					String s = c.getValue().substring(index + 1, c.getValue().length() - 1);
+					i += s.length();
+				}
+			}else if(c.getOp().equalsIgnoreCase("RESB")) {
+				i += Integer.parseInt(c.getValue());
+			}else if(c.getOp().equalsIgnoreCase("RESW")) {
+				i += (Integer.parseInt(c.getValue()) * 3);
+			}else{
+				i += 3;
+			}
+		}
+		
+		this.setEndLoc(String.format("%6s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
+		int start = Integer.parseInt(getStartLoc(), 16);
+		int total = i - start;
+		this.setTotalLoc(String.format("%6s", Integer.toHexString(total).toUpperCase()).replace(' ', '0'));
+		
+		return listCode;
 	}
 	
 	/**
@@ -274,8 +333,9 @@ public class MainAssembler {
 	 * @return 計算好Object code的pairs
 	 */
 	private List<Code> calculateObject(List<Code> pairs) {
+		List<Code> listCode = new ArrayList<Code>();
 		
-		return pairs;
+		return listCode;
 	}
 	
 	/**
