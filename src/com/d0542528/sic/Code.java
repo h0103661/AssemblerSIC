@@ -100,6 +100,7 @@ public class Code {
 			output += String.format("%-" + MainAssembler.getInstance().getLenTitle() + "s", "");
 		}
 		
+		//op×îéL¹Ì¶¨5Î»
 		output += "  ";
 		output += String.format("%-5s", getOp());
 		
