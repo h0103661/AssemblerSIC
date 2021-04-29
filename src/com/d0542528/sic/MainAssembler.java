@@ -61,6 +61,8 @@ public class MainAssembler {
 	 */
 	
 	private String fileName = "test.SIC";
+	private String fileOutput1Name = "objectcode.txt";
+	private String fileOutput2Name = "record.txt";
 	
 	private String codeName;	//程式名稱
 	private String startLoc;	//程式開頭位址
@@ -93,15 +95,20 @@ public class MainAssembler {
 		System.out.println(getTotalLoc());*/
 		
 		List<Code> pairsC = calculateObject(pairsB);
+		/*
 		for(Code c : pairsC) {
 			System.out.println(c.getOutput());
-		}
+		}*/
 		
-		/*
+		
 		List<String> records = createRecord(pairsC);
-		writeFileCodesFromString(fileName, pairsC);
-		writeFileRecordsFromString(fileName, records);
-		*/
+		/*
+		for(String s : records) {
+			System.out.println(s);
+		}*/
+		
+		writeFileCodesFromString(fileOutput1Name, pairsC);
+		writeFileRecordsFromString(fileOutput2Name, records);
 	}
 
 	/*
@@ -178,6 +185,9 @@ public class MainAssembler {
 					i = l;
 				}
 			}
+		}
+		if(getCodeName().length() > i) {
+			i = getCodeName().length();
 		}
 		this.lenTitle = i;
 	}
@@ -430,7 +440,80 @@ public class MainAssembler {
 	private List<String> createRecord(List<Code> pairs) {
 		List<String> records = new ArrayList<String>();
 		
+		//H
+		String h = "H" + getCodeName() + String.format("%6s", getStartLoc()).replace(' ', '0') + String.format("%6s", getTotalLoc()).replace(' ', '0');
+		records.add(h);
+		
+		//T
+		String loc = getStartLoc();
+		boolean nextLoc = false;
+		String list = "";
+		for(Code c : pairs) {
+			if(nextLoc) {
+				nextLoc = false;
+				loc = c.getLoc();
+			}
+			
+			//遇到RESB, RESW時
+			if(c.isOther()) {
+				if(c.getOp().equalsIgnoreCase("RESB") || c.getOp().equalsIgnoreCase("RESW")) {
+					if(!list.isEmpty()) {
+						//遇到RESB, RESW時, list有objcode則寫入一個T record
+						records.add(getTrecord(loc, list));
+					}
+					//如果列表是空的, 不用寫record (用於處理開頭是RESB, 或連續的RESB)
+					
+					nextLoc = true;
+					loc = "";
+					list = "";
+					continue;
+				}
+			}
+			
+			//如果加了這個code, 列表會滿時, 直接先寫一張record, 再以這個code為開頭
+			//列表滿是超過1F(16進位), 也就是不能超過31(10進位), 每2個字元是1, 所以總共是不能超過62
+			String temp = list + c.getCode();
+			if(temp.length() >= 62) {
+				records.add(getTrecord(loc, list));
+				
+				loc = c.getLoc();
+				list = c.getCode();
+				continue;
+			}
+			
+			//如果沒有遇到占位符, 且沒有滿record, 將目前的code放入list
+			list += c.getCode();
+		}
+		
+		//END時, list有objcode則寫入一個T record
+		if(!list.isEmpty()) {
+			records.add(getTrecord(loc, list));
+		}
+		
+		//E
+		String e = "E" + String.format("%6s", getStartLoc()).replace(' ', '0');
+		records.add(e);
+		
 		return records;
+	}
+	
+	private String getTrecord(String loc, String list) {
+		//T
+		String record = "T";
+		
+		//開始位址, 6位
+		record += String.format("%6s", loc).replace(' ', '0');
+		
+		//每2位占一個byte, 無條件進位
+		double ld = list.length();
+		int li = (int) Math.ceil(ld/2);
+		String len = String.format("%2s", Integer.toHexString(li).toUpperCase()).replace(' ', '0');
+		record += len;
+		
+		//objectcodes
+		record += list;
+		
+		return record;
 	}
 	
 	/*
@@ -440,9 +523,27 @@ public class MainAssembler {
 	private File writeFileCodesFromString(String loc, List<Code> pairs) {
 		//將code轉成輸出的字串
 		List<String> outputs = new ArrayList<String>();
+		
+		//START
+		Code start = new Code();
+		start.setLoc(getStartLoc());
+		start.setTitle(getCodeName());
+		start.setOp("START");
+		start.setValue(getStartLoc());
+		outputs.add(start.getOutput());
+		
+		//T
 		for(Code code : pairs) {
 			outputs.add(code.getOutput());
 		}
+		
+		//START
+		Code end = new Code();
+		end.setLoc(getEndLoc());
+		end.setOp("END");
+		end.setValue(getStartTitle());
+		outputs.add(end.getOutput());
+		
 		return writeFileFromString(loc, outputs);
 	}
 	
@@ -470,7 +571,7 @@ public class MainAssembler {
 		 */
 		for(String s : outputs) {
 			try {
-				buffer.write(s);
+				buffer.write(s + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
