@@ -1,15 +1,19 @@
 package com.d0542528.sic;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class OPcode {
 	
 	public OPcode() {
 		createOPMap();
+		createOther();
 	}
 
 	private Map<String, String> mapOP;
+	private List<String> listOther;
 
 	private void createOPMap() {
 		mapOP = new HashMap<String, String>();
@@ -75,6 +79,18 @@ public class OPcode {
 		mapOP.put("DC", "WD");
 	}
 	
+	private void createOther() {
+		listOther = new ArrayList<String>();
+		listOther.add("BYTE");
+		listOther.add("WORD");
+		listOther.add("RESB");
+		listOther.add("RESW");
+	}
+	
+	/*
+	 * 
+	 */
+	
 	public String findXfromString(String op) {
 		for(String x : mapOP.keySet()) {
 			if(mapOP.get(x).equalsIgnoreCase(op)) {
@@ -82,5 +98,18 @@ public class OPcode {
 			}
 		}
 		return null;
+	}
+	
+	public boolean isOPcode(String op) {
+		return findXfromString(op) != null;
+	}
+	
+	public boolean isOther(String op) {
+		for(String s : listOther) {
+			if(s.equalsIgnoreCase(op)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

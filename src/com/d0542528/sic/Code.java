@@ -7,6 +7,8 @@ public class Code {
 	private String op;
 	private String value;
 	private String code;
+	
+	private boolean isOther;
 
 	public Code() {
 		
@@ -56,9 +58,31 @@ public class Code {
 		this.code = code;
 	}
 	
-	/*
+	public boolean isOther() {
+		return isOther;
+	}
+
+	public void setOther(boolean isOther) {
+		this.isOther = isOther;
+	}
+
+	/**
 	 * 
+	 * @return debugÓÃµÄcode×Ö´®
 	 */
+	public String getPairString() {
+		String output = "";
+		if(getTitle() != null && !getTitle().isEmpty()) {
+			output += getTitle();
+		}
+		output += "\t";
+		output += getOp();
+		if(getValue() != null && !getValue().isEmpty()) {
+			output += "\t";
+			output += getValue();
+		}
+		return output;
+	}
 
 	/**
 	 * 

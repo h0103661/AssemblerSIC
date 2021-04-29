@@ -76,13 +76,13 @@ public class MainAssembler {
 		setCodeName(inputs);
 		setStartLoc(inputs);
 		setStartTitle(inputs);
-		/*
+		
 		List<Code> pairsA = pair(inputs);
 		
 		for(Code c : pairsA) {
-			System.out.println(c.getOutput());
+			System.out.println(c.getPairString());
 		}
-		*/
+		
 		/*
 		List<Code> pairsB = calculateLoc(pairsA);
 		List<Code> pairsC = calculateObject(pairsB);
@@ -210,6 +210,50 @@ public class MainAssembler {
 	 */
 	private List<Code> pair(List<String> inputs) {
 		List<Code> listCode = new ArrayList<Code>();
+		
+		String last = "";
+		String opcode = "";
+		boolean next = false;
+		boolean isOther = false;
+		for(String s : inputs) {
+			if(next) { //如果上一個是op就寫入code
+				Code code = new Code();
+				code.setTitle(last);
+				code.setOp(opcode);
+				code.setValue(s);
+				code.setOther(isOther);
+				listCode.add(code);
+				
+				last = "";
+				opcode = "";
+				next = false;
+				isOther = false;
+				continue;
+			}
+			if(op.isOPcode(s)) {
+				if(s.equalsIgnoreCase("RSUB")) { //RSUB只有一格, 要在這裡就寫入code
+					Code code = new Code();
+					code.setTitle(last);
+					code.setOp(s);
+					listCode.add(code);
+					
+					last = "";
+					opcode = "";
+					next = false;
+					isOther = false;
+				} else {
+					opcode = s;
+					next = true;
+					continue;
+				}
+			} else if(op.isOther(s)) { //如果不是op但是是佔位符, 一樣要在下一步寫入code
+				opcode = s;
+				next = true;
+				isOther = true;
+				continue;
+			}
+			last = s;
+		}
 		
 		return listCode;
 	}
