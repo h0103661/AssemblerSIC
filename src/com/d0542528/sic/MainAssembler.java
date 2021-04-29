@@ -321,12 +321,13 @@ public class MainAssembler {
 			listCode.add(newcode);
 			
 			if(c.getOp().equalsIgnoreCase("BYTE")) {
+				int index = c.getValue().indexOf("\'");
+				String s = c.getValue().substring(index + 1, c.getValue().length() - 1);
+				double l = s.length();
 				if(c.getValue().contains("X")) {
-					i += 1;
+					i += Math.ceil(l/2); //'X' 每2位占一個byte, 無條件進位
 				} else {
-					int index = c.getValue().indexOf("\'");
-					String s = c.getValue().substring(index + 1, c.getValue().length() - 1);
-					i += s.length();
+					i += l; //'C'每1位占一個byte
 				}
 			}else if(c.getOp().equalsIgnoreCase("RESB")) {
 				i += Integer.parseInt(c.getValue());
@@ -355,7 +356,41 @@ public class MainAssembler {
 		
 		for(Code c : pairs) {
 			if(c.isOther()) {
-				// TODO 補上RSUB和others
+				if(c.getOp().equalsIgnoreCase("BYTE")){
+					int index = c.getValue().indexOf("\'");
+					String s = c.getValue().substring(index + 1, c.getValue().length() - 1);
+					if(c.getValue().contains("X")) {
+						Code newcode = c.copy();
+						newcode.setCode(s);
+						listCode.add(newcode);
+					} else {
+						//轉成ascii
+						String listx = "";
+						for(char ch : s.toCharArray()) {
+							int x = ch;
+							listx += Integer.toHexString(x).toUpperCase();
+						}
+						
+						Code newcode = c.copy();
+						newcode.setCode(listx);
+						listCode.add(newcode);
+					}
+				} else if(c.getOp().equalsIgnoreCase("WORD")){ //轉16進位
+					Code newcode = c.copy();
+					newcode.setCode(String.format("%6s", Integer.toHexString(Integer.parseInt(c.getValue())).toUpperCase()).replace(' ', '0'));
+					listCode.add(newcode);
+				} else { //RESB, RESW
+					Code newcode = c.copy();
+					listCode.add(newcode);
+				}
+			} else if(c.getOp().equalsIgnoreCase("RSUB")){
+				String ta = "0000";
+				String op = OPcode.findXfromString(c.getOp());
+				String code = op + ta;
+				
+				Code newcode = c.copy();
+				newcode.setCode(code);
+				listCode.add(newcode);
 			} else {
 				if(c.getValue() != null && !c.getValue().isEmpty()) {
 					String value = c.getValue();
