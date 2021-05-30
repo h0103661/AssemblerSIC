@@ -133,7 +133,7 @@ public class Code {
 
 	/**
 	 * 
-	 * @return 寫入檔案用的字串
+	 * @return 寫入lst檔案用的字串
 	 */
 	public String getOutput() {
 		String output = getStringLoc();

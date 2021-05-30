@@ -61,13 +61,13 @@ public class MainAssembler {
 	 */
 	
 	private String fileName = "test.SIC";
-	private String fileOutput1Name = "objectcode.txt";
-	private String fileOutput2Name = "record.txt";
+	private String fileOutput1Name = "test.lst";
+	private String fileOutput2Name = "test.obj";
 	
 	private String codeName;	//程式名稱
 	private String startLoc;	//程式開頭位址
 	private String startTitle;	//程式開頭標籤
-	private int lenTitle;	//最長title長度
+	private int lenTitle;	    //最長title長度
 	private String endLoc;		//程式結尾位址
 	private String totalLoc;	//程式總長度
 	
@@ -78,37 +78,17 @@ public class MainAssembler {
 		setStartLoc(inputs);
 		setStartTitle(inputs);
 		
-		List<Code> pairsA = pair(inputs);
-		/*
-		for(Code c : pairsA) {
-			System.out.println(c.getStringPair());
-		}*/
-		//獲得title長度
-		setLenTitle(pairsA);
+		List<Code> listCodePair = pair(inputs);
+		setLenTitle(listCodePair);	//獲得title長度, 因為需要得知那些屬於title, 所以需要在pair之後
 		
-		List<Code> pairsB = calculateLoc(pairsA);
-		/*
-		for(Code c : pairsB) {
-			System.out.println(c.getStringLoc());
-		}
-		System.out.println(getEndLoc());
-		System.out.println(getTotalLoc());*/
+		List<Code> listCodeLoc = calculateLoc(listCodePair);
 		
-		List<Code> pairsC = calculateObject(pairsB);
-		/*
-		for(Code c : pairsC) {
-			System.out.println(c.getOutput());
-		}*/
+		List<Code> listCodeObj = calculateObject(listCodeLoc);
 		
+		List<String> listRecord = createRecord(listCodeObj);
 		
-		List<String> records = createRecord(pairsC);
-		/*
-		for(String s : records) {
-			System.out.println(s);
-		}*/
-		
-		writeFileCodesFromString(fileOutput1Name, pairsC);
-		writeFileRecordsFromString(fileOutput2Name, records);
+		writeFileCodesFromString(fileOutput1Name, listCodeObj);
+		writeFileRecordsFromString(fileOutput2Name, listRecord);
 	}
 
 	/*
@@ -219,6 +199,8 @@ public class MainAssembler {
 	 * @return 字元list
 	 */
 	private List<String> readFileFromString(String loc) {
+		System.out.println("[read file] ========================");
+		
 		List<String> listInputs = new ArrayList<String>();
 		/*
 		 * 讀取檔案
@@ -239,6 +221,7 @@ public class MainAssembler {
 		while(scan.hasNext()){
 			String next = scan.next();
 			listInputs.add(next);
+			System.out.println("[read file] read: " + next);
 		}
 		
 		/*
@@ -256,6 +239,8 @@ public class MainAssembler {
 			e.printStackTrace();
 		}
 		
+		System.out.println("[read file] ========================");
+		
 		return listInputs;
 	}
 	
@@ -265,6 +250,8 @@ public class MainAssembler {
 	 * @return Code的list
 	 */
 	private List<Code> pair(List<String> inputs) {
+		System.out.println("[pair code] ========================");
+		
 		List<Code> listCode = new ArrayList<Code>();
 		
 		String last = "";
@@ -280,6 +267,8 @@ public class MainAssembler {
 				code.setOther(isOther);
 				listCode.add(code);
 				
+				System.out.println("[pair code] pair success: " + code.getTitle() + " " + code.getOp() + " " + code.getValue());
+				
 				last = "";
 				opcode = "";
 				next = false;
@@ -292,6 +281,8 @@ public class MainAssembler {
 					code.setTitle(last);
 					code.setOp(s);
 					listCode.add(code);
+					
+					System.out.println("[pair code] pair success: " + code.getTitle() + " " + code.getOp() + " " + code.getValue());
 					
 					last = "";
 					opcode = "";
@@ -311,6 +302,8 @@ public class MainAssembler {
 			last = s;
 		}
 		
+		System.out.println("[pair code] ========================");
+		
 		return listCode;
 	}
 	
@@ -320,6 +313,8 @@ public class MainAssembler {
 	 * @return 計算好位址的pairs
 	 */
 	private List<Code> calculateLoc(List<Code> pairs) {
+		System.out.println("[calculate loc] ========================");
+		
 		List<Code> listCode = new ArrayList<Code>();
 		
 		//初始位址的10進位
@@ -329,6 +324,7 @@ public class MainAssembler {
 			//如果不滿4位，用0填充
 			newcode.setLoc(String.format("%4s", Integer.toHexString(i).toUpperCase()).replace(' ', '0'));
 			listCode.add(newcode);
+			System.out.println(newcode.getStringLoc());
 			
 			if(c.getOp().equalsIgnoreCase("BYTE")) {
 				int index = c.getValue().indexOf("\'");
@@ -353,6 +349,11 @@ public class MainAssembler {
 		int total = i - start;
 		this.setTotalLoc(String.format("%4s", Integer.toHexString(total).toUpperCase()).replace(' ', '0'));
 		
+		System.out.println("[calculate loc] all code calculated");
+		System.out.println("[calculate loc] end loc: " + this.getEndLoc());
+		System.out.println("[calculate loc] total loc: " + this.getTotalLoc());
+		System.out.println("[calculate loc] ========================");
+		
 		return listCode;
 	}
 	
@@ -362,6 +363,8 @@ public class MainAssembler {
 	 * @return 計算好Object code的pairs
 	 */
 	private List<Code> calculateObject(List<Code> pairs) {
+		System.out.println("[object code] ========================");
+		
 		List<Code> listCode = new ArrayList<Code>();
 		
 		for(Code c : pairs) {
@@ -373,6 +376,8 @@ public class MainAssembler {
 						Code newcode = c.copy();
 						newcode.setCode(s);
 						listCode.add(newcode);
+						
+						System.out.println(newcode.getOutput());
 					} else {
 						//轉成ascii
 						String listx = "";
@@ -384,14 +389,20 @@ public class MainAssembler {
 						Code newcode = c.copy();
 						newcode.setCode(listx);
 						listCode.add(newcode);
+						
+						System.out.println(newcode.getOutput());
 					}
 				} else if(c.getOp().equalsIgnoreCase("WORD")){ //轉16進位
 					Code newcode = c.copy();
 					newcode.setCode(String.format("%6s", Integer.toHexString(Integer.parseInt(c.getValue())).toUpperCase()).replace(' ', '0'));
 					listCode.add(newcode);
+					
+					System.out.println(newcode.getOutput());
 				} else { //RESB, RESW
 					Code newcode = c.copy();
 					listCode.add(newcode);
+					
+					System.out.println(newcode.getOutput());
 				}
 			} else if(c.getOp().equalsIgnoreCase("RSUB")){
 				String ta = "0000";
@@ -401,6 +412,8 @@ public class MainAssembler {
 				Code newcode = c.copy();
 				newcode.setCode(code);
 				listCode.add(newcode);
+				
+				System.out.println(newcode.getOutput());
 			} else {
 				if(c.getValue() != null && !c.getValue().isEmpty()) {
 					String value = c.getValue();
@@ -416,10 +429,13 @@ public class MainAssembler {
 					Code newcode = c.copy();
 					newcode.setCode(code);
 					listCode.add(newcode);
+					
+					System.out.println(newcode.getOutput());
 				}
 			}
 		}
 		
+		System.out.println("[object code] ========================");
 		return listCode;
 	}
 	
@@ -438,11 +454,14 @@ public class MainAssembler {
 	 * @return 寫成字串list的records
 	 */
 	private List<String> createRecord(List<Code> pairs) {
+		System.out.println("[create record] ========================");
+		
 		List<String> records = new ArrayList<String>();
 		
 		//H
 		String h = "H" + getCodeName() + String.format("%6s", getStartLoc()).replace(' ', '0') + String.format("%6s", getTotalLoc()).replace(' ', '0');
 		records.add(h);
+		System.out.println(h);
 		
 		//T
 		String loc = getStartLoc();
@@ -459,7 +478,9 @@ public class MainAssembler {
 				if(c.getOp().equalsIgnoreCase("RESB") || c.getOp().equalsIgnoreCase("RESW")) {
 					if(!list.isEmpty()) {
 						//遇到RESB, RESW時, list有objcode則寫入一個T record
-						records.add(getTrecord(loc, list));
+						String t = getTrecord(loc, list);
+						records.add(t);
+						System.out.println(t);
 					}
 					//如果列表是空的, 不用寫record (用於處理開頭是RESB, 或連續的RESB)
 					
@@ -474,7 +495,9 @@ public class MainAssembler {
 			//列表滿是超過1F(16進位), 也就是不能超過31(10進位), 每2個字元是1, 所以總共是不能超過62
 			String temp = list + c.getCode();
 			if(temp.length() >= 62) {
-				records.add(getTrecord(loc, list));
+				String t = getTrecord(loc, list);
+				records.add(t);
+				System.out.println(t);
 				
 				loc = c.getLoc();
 				list = c.getCode();
@@ -493,7 +516,9 @@ public class MainAssembler {
 		//E
 		String e = "E" + String.format("%6s", getStartLoc()).replace(' ', '0');
 		records.add(e);
+		System.out.println(e);
 		
+		System.out.println("[create record] ========================");
 		return records;
 	}
 	
@@ -521,6 +546,8 @@ public class MainAssembler {
 	 */
 	
 	private File writeFileCodesFromString(String loc, List<Code> pairs) {
+		System.out.println("[write file] write listing file");
+		
 		//將code轉成輸出的字串
 		List<String> outputs = new ArrayList<String>();
 		
@@ -548,10 +575,14 @@ public class MainAssembler {
 	}
 	
 	private File writeFileRecordsFromString(String loc, List<String> records) {
+		System.out.println("[write file] write object file");
+		
 		return writeFileFromString(loc, records);
 	}
 	
 	private File writeFileFromString(String loc, List<String> outputs) {
+		System.out.println("[write file] start");
+		
 		/*
 		 * 讀取檔案
 		 */
@@ -591,6 +622,7 @@ public class MainAssembler {
 			e.printStackTrace();
 		}
 		
+		System.out.println("[write file] finish");
 		return file;
 	}
 }
